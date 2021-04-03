@@ -41,38 +41,16 @@ class AccountMove(models.Model):
     rounded_total = fields.Monetary(string='Rounded Total', store=True, readonly=True, compute='_compute_amount')
     round_active = fields.Boolean('Enabled Roundoff', default=lambda self: self.env["ir.config_parameter"].sudo().get_param("account.invoice_roundoff"))
 
-    # @api.model
-    # def default_get(self, fields):
-    #     res = super(AccountMove, self).default_get(fields)
-    #     if self.env.context.get('active_model') == 'purchase.order':
-    #         purchase = self.env['purchase.order'].browse(self.env.context.get('active_id'))
-    #         if purchase.is_enabled_roundoff:
-    #             account_id = int(self.env['ir.config_parameter'].sudo().get_param("account.roundoff_account_id"))
-    #             if purchase.amount_round_off:
-    #                 self.env['account.move.line'].new({
-    #                     'name': 'Roundoff Amount',
-    #                     'account_id': account_id,
-    #                     'quantity': 1,
-    #                     'price_unit': purchase.amount_round_off,
-    #                     'display_type': False,
-    #                     'is_roundoff_line': True,
-    #                     'exclude_from_invoice_tab': False,
-    #                     'is_rounding_line': False,
-    #                     'predict_override_default_account': False,
-    #                     'predict_from_name': False,
-    #                     'move_id':self.id
-    #                 })
-    #     return res
 
     @api.depends(
-        'line_ids.debit',
-        'line_ids.credit',
-        'line_ids.currency_id',
-        'line_ids.amount_currency',
-        'line_ids.amount_residual',
-        'line_ids.amount_residual_currency',
-        'line_ids.payment_id.state',
-        'line_ids.product_id',
+        'invoice_line_ids.debit',
+        'invoice_line_ids.credit',
+        'invoice_line_ids.currency_id',
+        'invoice_line_ids.amount_currency',
+        'invoice_line_ids.amount_residual',
+        'invoice_line_ids.amount_residual_currency',
+        'invoice_line_ids.payment_id.state',
+        'invoice_line_ids.product_id',
         # 'line_ids.partner_id',
         'partner_id','invoice_line_ids.product_id')
     def _compute_amount(self):

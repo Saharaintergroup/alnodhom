@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import math
+
 from odoo import api, fields, models, _
 
 class PurchaseOrder(models.Model):
@@ -37,7 +39,11 @@ class PurchaseOrder(models.Model):
                 'amount_total': amount_untaxed + amount_tax,
             })
             if order.is_enabled_roundoff == True:
-                amount_total = round(order.amount_total)
+                val = order.amount_total
+                if (float(val) % 1) >= 0.5:
+                    amount_total = math.ceil(val)
+                elif (float(val) % 1) < 0.5:
+                    amount_total = round(val) + 0.5
                 amount_round_off = amount_total - order.amount_total
                 order.update({
                     'amount_total': amount_total,

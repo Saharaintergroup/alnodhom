@@ -1,3 +1,5 @@
+import math
+
 from odoo.tools import float_is_zero
 from odoo.exceptions import UserError
 from odoo import fields, models, api, _
@@ -143,7 +145,12 @@ class AccountMove(models.Model):
 
             # Round off amoount updates
             if move.round_active and move.amount_total:
-                amount_total = round((move.amount_total))
+                # amount_total = round((move.amount_total))
+                val = move.amount_total
+                if (float(val) % 1) >= 0.5:
+                    amount_total = math.ceil(val)
+                elif (float(val) % 1) < 0.5:
+                    amount_total = round(val) + 0.5
                 amount_round_off = amount_total - move.amount_total
                 move.round_off_value = amount_round_off
                 move.round_off_amount = amount_round_off

@@ -74,7 +74,7 @@ class AccountMove(models.Model):
         'line_ids.payment_id.state',
         'line_ids.product_id',
         # 'line_ids.partner_id',
-        'partner_id')
+        'partner_id','invoice_line_ids.product_id')
     def _compute_amount(self):
         invoice_ids = [move.id for move in self if move.id and move.is_invoice(include_receipts=True)]
         self.env['account.payment'].flush(['state'])

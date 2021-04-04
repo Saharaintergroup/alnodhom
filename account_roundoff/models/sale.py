@@ -27,20 +27,22 @@ class SaleOrder(models.Model):
                 'amount_total': amount_untaxed + amount_tax,
             })
             if order.is_enabled_roundoff == True:
-                val = order.amount_total
+                val = order.amount_tax
                 if (float(val) % 1) >= 0.5:
                     amount_total = math.ceil(val)
-                elif(float(val) % 1) < 0.5:
+                elif(float(val) % 1) < 0.5 and (float(val) % 1) > 0:
                     amount_total = round(val) + 0.5
-                if order.amount_total:
-                    amount_round_off = amount_total - order.amount_total
-                    print("****",amount_round_off)
+                    print("amount_total",amount_total)
+                else:
+                    amount_total = 0
+                if order.amount_tax and amount_total:
+                    amount_round_off = amount_total - order.amount_tax
                     order.update({
-                        'amount_total': amount_total,
+                        'amount_total': amount_untaxed + amount_total,
                         'amount_round_off': amount_round_off})
                 else:
                     order.update({
-                        'amount_total': 0.00,
+                        'amount_total': order.amount_total,
                         'amount_round_off': 0.00})
                     
                     

@@ -39,22 +39,30 @@ class PurchaseOrder(models.Model):
                 'amount_total': amount_untaxed + amount_tax,
             })
             if order.is_enabled_roundoff == True:
-                val = order.amount_total
+                val = order.amount_tax
                 if (float(val) % 1) >= 0.5:
                     amount_total = math.ceil(val)
-                elif (float(val) % 1) < 0.5:
+                elif (float(val) % 1) < 0.5 and (float(val) % 1) > 0:
                     amount_total = round(val) + 0.5
-                amount_round_off = amount_total - order.amount_total
-                order.update({
-                    'amount_total': amount_total,
-                    'amount_round_off': amount_round_off})
-            else:
-                if order.is_enabled_roundoff == False:
+                else:
+                    amount_total = 0
+                if order.amount_tax and amount_total:
+                    amount_round_off = amount_total - order.amount_tax
                     order.update({
-                        'amount_untaxed': order.currency_id.round(amount_untaxed),
-                        'amount_tax': order.currency_id.round(amount_tax),
-                        'amount_total': amount_untaxed + amount_tax,
-                    })
+                        'amount_total': amount_untaxed + amount_total,
+                        'amount_round_off': amount_round_off})
+                else:
+                    order.update({
+                        'amount_total': order.amount_total,
+                        'amount_round_off': 0.00})
+            # else:
+            #     if order.is_enabled_roundoff == False:
+            #         order.update({
+            #             'amount_untaxed': order.currency_id.round(amount_untaxed),
+            #             'amount_tax': order.currency_id.round(amount_tax),
+            #             'amount_total': amount_untaxed + amount_tax,
+            #             'amount_round_off': 0.0
+            #         })
         #super(PurchaseOrder, self)._amount_all()
 
         return True

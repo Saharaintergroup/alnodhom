@@ -125,23 +125,28 @@ class AccountMove(models.Model):
             move.amount_residual_signed = total_residual
 
             # Round off amoount updates
-            if move.round_active and move.amount_total:
+            if move.round_active and move.amount_tax:
                 # amount_total = round((move.amount_total))
-                val = move.amount_total
+                val = move.amount_tax
                 if (float(val) % 1) >= 0.5:
                     amount_total = math.ceil(val)
-                elif (float(val) % 1) < 0.5:
+                elif (float(val) % 1) < 0.5 and (float(val) % 1) > 0:
                     amount_total = round(val) + 0.5
-                amount_round_off = amount_total - move.amount_total
-                move.round_off_value = amount_round_off
-                move.round_off_amount = amount_round_off
-                move.rounded_total = amount_total
-                move.amount_total = amount_total
-                move.amount_total_signed = abs(total) if move.move_type == 'entry' else -total
-            else:
-                move.round_off_value = 0.00
-                move.round_off_amount = 0.00
-                move.rounded_total =0.00
+                    print("amount_total", amount_total)
+                else:
+                    amount_total = 0
+                if move.amount_tax and amount_total:
+                    amount_round_off = amount_total - move.amount_tax
+                    print("amount_round_off",amount_round_off)
+                    move.round_off_value = amount_round_off
+                    move.round_off_amount = amount_round_off
+                    move.rounded_total = move.amount_untaxed + amount_total
+                    move.amount_total = move.amount_untaxed + amount_total
+                    move.amount_total_signed = abs(total) if move.move_type == 'entry' else -total
+                else:
+                    move.round_off_value = 0.00
+                    move.round_off_amount = 0.00
+                    move.rounded_total =0.00
             currency = len(currencies) == 1 and currencies.pop() or move.company_id.currency_id
             is_paid = currency and currency.is_zero(move.amount_residual) or not move.amount_residual
             # Compute 'invoice_payment_state'.

@@ -46,7 +46,7 @@
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='amount_total']" position="before">
                     <field name="round_active" invisible="1"/>
-                    <field name="rounded_total"/>
+<!--                    <field name="rounded_total"/>-->
                     <field name="round_off_value"/>
                     <field name="round_off_amount" invisible="1"/>
                 </xpath>

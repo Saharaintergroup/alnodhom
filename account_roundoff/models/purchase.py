@@ -39,17 +39,37 @@ class PurchaseOrder(models.Model):
                 'amount_total': amount_untaxed + amount_tax,
             })
             if order.is_enabled_roundoff == True:
-                val = order.amount_tax
-                if (float(val) % 1) >= 0.5:
-                    amount_total = math.ceil(val)
-                elif (float(val) % 1) < 0.5 and (float(val) % 1) > 0:
-                    amount_total = round(val) + 0.5
+                sales_taxes = 0
+                other_taxes = 0
+                for line in order.order_line:
+                    for tax in line.taxes_id:
+                        if tax.other_tax == True:
+                            other_taxes += tax.amount * line.price_subtotal / 100
+                        else:
+                            sales_taxes += tax.amount * line.price_subtotal / 100
+                val1 = sales_taxes
+                if (float(val1) % 1) >= 0.5:
+                    total_sales = math.ceil(val1)
+
+                elif (float(val1) % 1) < 0.5 and (float(val1) % 1) > 0:
+                    total_sales = round(val1) + 0.5
                 else:
-                    amount_total = 0
-                if order.amount_tax and amount_total:
-                    amount_round_off = amount_total - order.amount_tax
+                    total_sales = 0
+
+                val2 = other_taxes
+                if (float(val2) % 1) >= 0.5:
+                    total_other = math.ceil(val2)
+
+                elif (float(val2) % 1) < 0.5 and (float(val2) % 1) > 0:
+                    total_other = round(val2) + 0.5
+                else:
+                    total_other = 0
+
+                total_taxes = total_sales + total_other
+                if order.amount_tax and total_taxes:
+                    amount_round_off = total_taxes - order.amount_tax
                     order.update({
-                        'amount_total': amount_untaxed + amount_total,
+                        'amount_total': amount_untaxed + total_taxes,
                         'amount_round_off': amount_round_off})
                 else:
                     order.update({

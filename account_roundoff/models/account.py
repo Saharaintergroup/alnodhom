@@ -127,21 +127,38 @@ class AccountMove(models.Model):
             # Round off amoount updates
             if move.round_active and move.amount_tax:
                 # amount_total = round((move.amount_total))
-                val = move.amount_tax
-                if (float(val) % 1) >= 0.5:
-                    amount_total = math.ceil(val)
-                elif (float(val) % 1) < 0.5 and (float(val) % 1) > 0:
-                    amount_total = round(val) + 0.5
-                    print("amount_total", amount_total)
+                sales_taxes = 0
+                other_taxes = 0
+                for line in move.line_ids:
+                    for tax in line.tax_ids:
+                        if tax.other_tax == True:
+                            other_taxes += tax.amount * line.price_subtotal / 100
+                        else:
+                            sales_taxes += tax.amount * line.price_subtotal / 100
+                val1 = sales_taxes
+                if (float(val1) % 1) >= 0.5:
+                    total_sales = math.ceil(val1)
+                elif (float(val1) % 1) < 0.5 and (float(val1) % 1) > 0:
+                    total_sales = round(val1) + 0.5
                 else:
-                    amount_total = 0
-                if move.amount_tax and amount_total:
-                    amount_round_off = amount_total - move.amount_tax
-                    print("amount_round_off",amount_round_off)
+                    total_sales = 0
+
+                val2 = other_taxes
+                if (float(val2) % 1) >= 0.5:
+                    total_other = math.ceil(val2)
+                elif (float(val2) % 1) < 0.5 and (float(val2) % 1) > 0:
+                    total_other = round(val2) + 0.5
+                else:
+                    total_other = 0
+
+                total_taxes = total_sales + total_other
+
+                if move.amount_tax and total_taxes:
+                    amount_round_off = total_taxes - move.amount_tax
                     move.round_off_value = amount_round_off
                     move.round_off_amount = amount_round_off
-                    move.rounded_total = move.amount_untaxed + amount_total
-                    move.amount_total = move.amount_untaxed + amount_total
+                    move.rounded_total = move.amount_untaxed + total_taxes
+                    move.amount_total = move.amount_untaxed + total_taxes
                     move.amount_total_signed = abs(total) if move.move_type == 'entry' else -total
                 else:
                     move.round_off_value = 0.00
@@ -233,3 +250,9 @@ class AccountMove(models.Model):
                 raise UserError(_('You cannot create a move already in the posted state. Please create a draft move and post it after.'))
             vals_list = self._move_autocomplete_invoice_lines_create(vals_list)
         return super(AccountMove, self).create(vals_list)
+
+
+class AccountTax(models.Model):
+    _inherit = 'account.tax'
+
+    other_tax = fields.Boolean("Other Tax")

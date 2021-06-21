@@ -38,9 +38,9 @@ class PurchaseOrder(models.Model):
                 'amount_tax': order.currency_id.round(amount_tax),
                 'amount_total': amount_untaxed + amount_tax,
             })
+            sales_taxes = 0
+            other_taxes = 0
             if order.is_enabled_roundoff == True:
-                sales_taxes = 0
-                other_taxes = 0
                 for line in order.order_line:
                     for tax in line.taxes_id:
                         if tax.other_tax == True:
@@ -54,7 +54,7 @@ class PurchaseOrder(models.Model):
                 elif (float(val1) % 1) < 0.5 and (float(val1) % 1) > 0:
                     total_sales = round(val1) + 0.5
                 else:
-                    total_sales = 0
+                    total_sales = val1
 
                 val2 = other_taxes
                 if (float(val2) % 1) >= 0.5:
@@ -63,7 +63,7 @@ class PurchaseOrder(models.Model):
                 elif (float(val2) % 1) < 0.5 and (float(val2) % 1) > 0:
                     total_other = round(val2) + 0.5
                 else:
-                    total_other = 0
+                    total_other = val2
 
                 total_taxes = total_sales + total_other
                 if order.amount_tax and total_taxes:

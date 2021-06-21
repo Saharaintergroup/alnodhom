@@ -11,7 +11,7 @@ class SaleOrder(models.Model):
                                              "account.invoice_roundoff"))
     amount_round_off = fields.Monetary(string='Roundoff Amount', store=True, readonly=True, compute='_amount_all')
 
-    @api.depends('order_line.price_total')
+    @api.depends('order_line.price_total','order_line.price_subtotal')
     def _amount_all(self):
         """
         Compute the total amounts of the SO.
@@ -26,33 +26,32 @@ class SaleOrder(models.Model):
                 'amount_tax': amount_tax,
                 'amount_total': amount_untaxed + amount_tax,
             })
+            sales_taxes = 0
+            other_taxes = 0
             if order.is_enabled_roundoff == True:
-                sales_taxes = 0
-                other_taxes = 0
                 for line in order.order_line:
                     for tax in line.tax_id:
                         if tax.other_tax == True:
-                            other_taxes += tax.amount * line.price_subtotal / 100
+                            other_taxes += (tax.amount/100) * line.price_subtotal
                         else:
-                            sales_taxes += tax.amount * line.price_subtotal / 100
+                            sales_taxes += (tax.amount/100) * line.price_subtotal
                 val1 = sales_taxes
+                val2 = other_taxes
+
                 if (float(val1) % 1) >= 0.5:
                     total_sales = math.ceil(val1)
-
                 elif(float(val1) % 1) < 0.5 and (float(val1) % 1) > 0:
                     total_sales = round(val1) + 0.5
                 else:
-                    total_sales = 0
+                    total_sales = val1
 
-                val2 = other_taxes
                 if (float(val2) % 1) >= 0.5:
                     total_other = math.ceil(val2)
-                    print("total_other",total_other)
                 elif (float(val2) % 1) < 0.5 and (float(val2) % 1) > 0:
                     total_other = round(val2) + 0.5
                 else:
-                    total_other = 0
-
+                    total_other = val2
+                    
                 total_taxes = total_sales + total_other
                 if order.amount_tax and total_taxes:
                     amount_round_off = total_taxes - order.amount_tax

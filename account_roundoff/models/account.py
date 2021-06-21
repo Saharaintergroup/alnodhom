@@ -125,10 +125,10 @@ class AccountMove(models.Model):
             move.amount_residual_signed = total_residual
 
             # Round off amoount updates
+            sales_taxes = 0
+            other_taxes = 0
             if move.round_active and move.amount_tax:
                 # amount_total = round((move.amount_total))
-                sales_taxes = 0
-                other_taxes = 0
                 for line in move.line_ids:
                     for tax in line.tax_ids:
                         if tax.other_tax == True:
@@ -141,7 +141,7 @@ class AccountMove(models.Model):
                 elif (float(val1) % 1) < 0.5 and (float(val1) % 1) > 0:
                     total_sales = round(val1) + 0.5
                 else:
-                    total_sales = 0
+                    total_sales = val1
 
                 val2 = other_taxes
                 if (float(val2) % 1) >= 0.5:
@@ -149,7 +149,7 @@ class AccountMove(models.Model):
                 elif (float(val2) % 1) < 0.5 and (float(val2) % 1) > 0:
                     total_other = round(val2) + 0.5
                 else:
-                    total_other = 0
+                    total_other = val2
 
                 total_taxes = total_sales + total_other
 

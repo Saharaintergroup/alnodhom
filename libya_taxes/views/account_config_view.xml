@@ -61,8 +61,8 @@
             <field name="arch" type="xml">
 
                 <xpath expr="//field[@name='active']" position="after">
-                    <field name="other_tax"/>
-                    <field name="depends_tax" attrs="{'invisible': [('other_tax', '=', False)]}"/>
+<!--                    <field name="other_tax"/>-->
+                    <field name="depends_tax" attrs="{'invisible': [('amount_type', '!=', 'other_tax')]}"/>
                 </xpath>
                 <xpath expr="//form/sheet/group/group[2]/div" position="after">
                     <field name="rounding"/>

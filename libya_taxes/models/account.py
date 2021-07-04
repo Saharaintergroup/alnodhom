@@ -134,7 +134,7 @@ class AccountMove(models.Model):
                 # amount_total = round((move.amount_total))
                 for line in move.line_ids:
                     for tax in line.tax_ids:
-                        if tax.other_tax == True:
+                        if tax.amount_type == 'other_tax':
                             other_taxes_depends += (tax.depends_tax.amount / 100) * line.price_subtotal
                             other_taxes += (tax.amount / 100) * other_taxes_depends
                             val2 += float_round(other_taxes, precision_rounding=tax.rounding,
@@ -145,7 +145,7 @@ class AccountMove(models.Model):
                                                 rounding_method=tax.rounding_method)
 
                 total_taxes = val1 + val2
-                if  total_taxes:
+                if move.amount_tax and total_taxes:
                     amount_round_off = total_taxes - move.amount_tax
                     move.round_off_value = amount_round_off
                     move.round_off_amount = amount_round_off
@@ -256,3 +256,58 @@ class AccountTax(models.Model):
                                        help='The tie-breaking rule used for float rounding operations')
 
     depends_tax = fields.Many2one('account.tax',"Depends Tax")
+
+    amount_type = fields.Selection(default='percent', string="Tax Computation", required=True,
+                                   selection=[('group', 'Group of Taxes'), ('fixed', 'Fixed'),
+                                              ('percent', 'Percentage of Price'),
+                                              ('division', 'Percentage of Price Tax Included'),
+                                              ('other_tax', 'Depends on other Tax')],
+                                   help="""
+        - Group of Taxes: The tax is a set of sub taxes.
+        - Fixed: The tax amount stays the same whatever the price.
+        - Percentage of Price: The tax amount is a % of the price:
+            e.g 100 * (1 + 10%) = 110 (not price included)
+            e.g 110 / (1 + 10%) = 100 (price included)
+        - Percentage of Price Tax Included: The tax amount is a division of the price:
+            e.g 180 / (1 - 10%) = 200 (not price included)
+            e.g 200 * (1 - 10%) = 180 (price included)
+            """)
+
+    def _compute_amount(self, base_amount, price_unit, quantity=1.0, product=None, partner=None):
+        """ Returns the amount of a single tax. base_amount is the actual amount on which the tax is applied, which is
+            price_unit * quantity eventually affected by previous taxes (if tax is include_base_amount XOR price_include)
+        """
+        self.ensure_one()
+
+        if self.amount_type == 'fixed':
+            # Use copysign to take into account the sign of the base amount which includes the sign
+            # of the quantity and the sign of the price_unit
+            # Amount is the fixed price for the tax, it can be negative
+            # Base amount included the sign of the quantity and the sign of the unit price and when
+            # a product is returned, it can be done either by changing the sign of quantity or by changing the
+            # sign of the price unit.
+            # When the price unit is equal to 0, the sign of the quantity is absorbed in base_amount then
+            # a "else" case is needed.
+            if base_amount:
+                return math.copysign(quantity, base_amount) * self.amount
+            else:
+                return quantity * self.amount
+
+        price_include = self._context.get('force_price_include', self.price_include)
+
+        # base * (1 + tax_amount) = new_base
+        if self.amount_type == 'percent' and not price_include:
+            print("base",base_amount)
+            return base_amount * self.amount / 100
+        # <=> new_base = base / (1 + tax_amount)
+        if self.amount_type == 'percent' and price_include:
+            return base_amount - (base_amount / (1 + self.amount / 100))
+        # base / (1 - tax_amount) = new_base
+        if self.amount_type == 'division' and not price_include:
+            return base_amount / (1 - self.amount / 100) - base_amount if (1 - self.amount / 100) else 0.0
+        # <=> new_base * (1 - tax_amount) = base
+        if self.amount_type == 'division' and price_include:
+            return base_amount - (base_amount * (self.amount / 100))
+
+        if self.amount_type == 'other_tax' and not price_include:
+            return (base_amount * self.depends_tax.amount / 100 ) * (self.amount/100)

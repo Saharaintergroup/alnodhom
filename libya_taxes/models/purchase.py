@@ -48,7 +48,7 @@ class PurchaseOrder(models.Model):
             if order.is_enabled_roundoff == True:
                 for line in order.order_line:
                     for tax in line.taxes_id:
-                        if tax.other_tax == True:
+                        if tax.amount_type == 'other_tax':
                             other_taxes_depends += (tax.depends_tax.amount / 100) * line.price_subtotal
                             other_taxes += (tax.amount / 100) * other_taxes_depends
                             val2 += float_round(other_taxes, precision_rounding=tax.rounding,

@@ -28,30 +28,30 @@
             </field>
         </record>
 
-       <!--<record model="ir.ui.view" id="invoice_extend_round_off_tree_view">
-            <field name="name">invoice.move.extend_round_off</field>
-            <field name="model">account.move</field>
-            <field name="inherit_id" ref="account.view_invoice_tree"/>
-            <field name="arch" type="xml">
-                <xpath expr="//field[@name='type']" position="before">
-                    <field name="round_active" invisible="1"/>
-                </xpath>
-            </field>
-        </record>-->
+        <!--<record model="ir.ui.view" id="invoice_extend_round_off_tree_view">
+             <field name="name">invoice.move.extend_round_off</field>
+             <field name="model">account.move</field>
+             <field name="inherit_id" ref="account.view_invoice_tree"/>
+             <field name="arch" type="xml">
+                 <xpath expr="//field[@name='type']" position="before">
+                     <field name="round_active" invisible="1"/>
+                 </xpath>
+             </field>
+         </record>-->
 
-<!--        <record model="ir.ui.view" id="invoice__extend_round_off_view">-->
-<!--            <field name="name">invoice.move.extend_round_off</field>-->
-<!--            <field name="model">account.move</field>-->
-<!--            <field name="inherit_id" ref="account.view_move_form"/>-->
-<!--            <field name="arch" type="xml">-->
-<!--                <xpath expr="//field[@name='amount_total']" position="before">-->
-<!--                    <field name="round_active" invisible="1"/>-->
-<!--&lt;!&ndash;                    <field name="rounded_total"/>&ndash;&gt;-->
-<!--                    <field name="round_off_value"/>-->
-<!--                    <field name="round_off_amount" invisible="1"/>-->
-<!--                </xpath>-->
-<!--            </field>-->
-<!--        </record>-->
+        <!--        <record model="ir.ui.view" id="invoice__extend_round_off_view">-->
+        <!--            <field name="name">invoice.move.extend_round_off</field>-->
+        <!--            <field name="model">account.move</field>-->
+        <!--            <field name="inherit_id" ref="account.view_move_form"/>-->
+        <!--            <field name="arch" type="xml">-->
+        <!--                <xpath expr="//field[@name='amount_total']" position="before">-->
+        <!--                    <field name="round_active" invisible="1"/>-->
+        <!--&lt;!&ndash;                    <field name="rounded_total"/>&ndash;&gt;-->
+        <!--                    <field name="round_off_value"/>-->
+        <!--                    <field name="round_off_amount" invisible="1"/>-->
+        <!--                </xpath>-->
+        <!--            </field>-->
+        <!--        </record>-->
 
         <!-- Inherit Form View to Modify it -->
         <record id="account_tax_inherit" model="ir.ui.view">
@@ -61,13 +61,26 @@
             <field name="arch" type="xml">
 
                 <xpath expr="//field[@name='active']" position="after">
-<!--                    <field name="other_tax"/>-->
+                    <!--                    <field name="other_tax"/>-->
                     <field name="depends_tax" attrs="{'invisible': [('amount_type', '!=', 'other_tax')]}"/>
                 </xpath>
-                <xpath expr="//form/sheet/group/group[2]/div" position="after">
-                    <field name="rounding"/>
-                    <field name="rounding_method"/>
+                <xpath expr="//form/sheet/group/group[2]" position="replace">
+                    <group>
+                        <field name="type_tax_use"/>
+                        <field name="tax_scope"/>
+                        <label for="amount"
+                               attrs="{'invisible':[('amount_type','not in', ('fixed', 'percent', 'division','other_tax'))]}"/>
+                        <div attrs="{'invisible':[('amount_type','not in', ('fixed', 'percent', 'division','other_tax'))]}">
+                            <field name="amount" class="oe_inline"/>
+                            <span class="o_form_label oe_inline" attrs="{'invisible':[('amount_type','=','fixed')]}">
+                                %</span>
+                        </div>
+                        <field name="rounding"/>
+                        <field name="rounding_method"/>
+                    </group>
+
                 </xpath>
+
 
             </field>
         </record>
